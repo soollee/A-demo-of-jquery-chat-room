@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>聊天室</title>
+<link rel="stylesheet" type="text/css" href="jquery.sinaEmotion.css" />
+<style type="text/css">
+html,body{margin: 0;height:100%;}
+.chatContainer{height:100%;position: relative;background: url(chat_bg.jpg) no-repeat;background-size: cover;}
+.chatContainer .chatBox{padding:5px; background: rgba(0,0,0,0.35);overflow-y: auto;position: absolute;top: 0;right: 0;bottom: 85px;left: 0}
+.chatContainer .chatBox .item{padding:3px 0px;}
+.chatContainer .chatBox .item-title span{color:#3dbfff;font-size:12px}
+.chatContainer .chatBox .create-name{;margin-right: 10px}
+.chatContainer .chatBox .item-message{color: #f8f8f8;font-size:12px;word-break: break-all;}
+.chatContainer .oporation{padding:5px;}
+.chatContainer .oporation .icon{width:25px;height:25px;display: inline-block;}
+.chatContainer .oporation img{width:25px;height:25px;}
+.chatContainer .chatFooter{position: fixed;bottom: 0;left: 0;width: 100%;border-top:1px solid #757f90}
+.chatContainer .chatInput{overflow: hidden;}
+.chatContainer .message-input{resize:none;height: 50px;width:80%;box-sizing: border-box;float: left;}
+.chatContainer .send{width:20%;height: 50px;color: #fff;background:#f80;font-size: 14px;text-align: center;box-sizing: border-box;border:none;}
+</style>
+</head>
+<body>
+<div class="chatContainer" id="chatContainer">
+	<div class="chatBox" id="chatBox"></div>
+	<div class="chatFooter">
+		<div class="oporation"><span class="icon emotion" id="emotion"><img src="emotion.png"/></span></div>
+		<div class="chatInput">
+			<textarea class="message-input" id="messageInput"></textarea>
+			<input id="sendMessage" class="send" type="submit" value="发送"/>
+		</div>
+	</div>
+</div>	
+<script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript" src="jquery.sinaEmotion.js"></script>
+<script type="text/javascript">
+$(function (){
+	// 绑定表情
+	$('#emotion').SinaEmotion($('#messageInput'));
+
+	//正式开发时会监听从服务端发过来的消息
+	//监听点击发送按钮事件
+	$('#sendMessage').on('click',function(){
+		sendMessage();
+	});
+
+	//正式开发时先把消息发送到服务器，再向界面追加信息
+	function sendMessage(){
+		if($("#messageInput").val()!=''){
+
+			addItem("马可波罗",getTime(),AnalyticEmotion(replace_em($('.message-input').val())));
+		}else{
+			alert("不能发送空白信息");
+		}
+	}
+	
+	//判断用户是否拖动过滚动条
+	//当对方来消息时，判断滚动条小于可滚动的高度，添加消息之后不要自动滚到底部，
+	//否则，添加消息之后自动滚到底部。
+	var isScroll=false;
+	$('#chatBox').scroll(function(){
+		var scrollHeight=$('#chatBox')[0].scrollHeight-$('#chatBox').outerHeight();
+		if($('#chatBox').scrollTop()<scrollHeight){
+			isScroll=true;
+		}else{
+			isScroll=false;
+		}
+	});
+
+	//添加消息
+	function addItem(name,time,message) {
+		var messageItem='<div class="item"><div class="item-title"><span class="create-name">'+name+'</span><span class="create-time">'+time+'</span></div><div class="item-message">'+message+'</div></div>'
+		$('#chatBox').append(messageItem);
+		//如果消息的发送人不是我自己，并且我滚动了页面，页面追加消息时不会自动滚动
+		if(!(name!="马可波罗" && isScroll)){
+			var scrollH=$('#chatBox')[0].scrollHeight;
+			$('#chatBox').scrollTop(scrollH);
+		}
+		$('#messageInput').val('');
+		
+	}
+	
+	//html格式转义
+	function replace_em(str){
+		str = str.replace(/\</g,'&lt;');
+		str = str.replace(/\>/g,'&gt;');
+		str = str.replace(/\n/g,'<br/>');
+		str = str.replace(/\s/g,'&nbsp;&nbsp;');
+		return str;
+	}
+	
+	//获取本地时间，正式开发的应该使用服务器时间
+	function getTime() {
+		var today = new Date();
+		var y = today.getFullYear();
+		var mo = today.getMonth()+1;
+		var d = today.getDate();
+		var h = today.getHours();
+		var m = today.getMinutes();
+		var s = today.getSeconds();
+		return y + '/' + mo + '/' + d + ' ' + h + ':' + m + ':' + s;
+	}
+	
+	//监听回车事件
+	//发送信息用enter，文字内容换行用shift+enter
+	jQuery.fn.extend({  
+		enter: function(fn){  
+			$(this).bind('keydown',function(event){  
+				var e = event || window.event;  
+				if(!e.ctrlKey &&!e.shiftKey&& e.keyCode ==13){  
+				  if(typeof(fn)!='undefined'){  
+					  fn.call(this);  
+					  //这句话阻止原有的回车换行事件的冒泡执行
+					  return false;
+				   }  
+				}  
+			});  
+			return this;  
+		}  
+	});  
+	$('#messageInput').enter(function(){
+		sendMessage();
+	});  
+}); 
+</script>
+</body>
+</html>
